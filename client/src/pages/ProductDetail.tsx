@@ -9,7 +9,9 @@ import { toast } from "sonner";
 import { ProductCard } from "@/components/ProductCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { productCatalog, type StoreProduct } from "@/data/catalog";
+import type { StoreProduct } from "@/data/catalog";
+import { managedProductsOrFallback } from "@/lib/storefrontData";
+import { trpc } from "@/lib/trpc";
 import { useCart } from "@/contexts/CartContext";
 
 type MediaItem = { type: "image" | "video"; src: string };
@@ -17,17 +19,19 @@ const currency = new Intl.NumberFormat("en-BD");
 
 export default function ProductDetail() {
   const [, params] = useRoute<{ slug: string }>("/product/:slug");
-  const product = productCatalog.find((item) => item.slug === params?.slug);
+  const managedProducts = trpc.storefront.products.useQuery(undefined, { retry: false });
+  const products = managedProductsOrFallback(managedProducts.data);
+  const product = products.find((item) => item.slug === params?.slug);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => { setIsLoading(true); const timer = window.setTimeout(() => setIsLoading(false), 140); return () => window.clearTimeout(timer); }, [params?.slug]);
 
-  if (isLoading) return <div className="aurelia-site"><SiteHeader /><ProductSkeleton /><SiteFooter /></div>;
+  if (isLoading || managedProducts.isLoading) return <div className="aurelia-site"><SiteHeader /><ProductSkeleton /><SiteFooter /></div>;
   if (!product) return <ProductNotFound />;
-  return <ProductExperience product={product} />;
+  return <ProductExperience product={product} allProducts={products} />;
 }
 
-function ProductExperience({ product }: { product: StoreProduct }) {
+function ProductExperience({ product, allProducts }: { product: StoreProduct; allProducts: StoreProduct[] }) {
   const media = useMemo<MediaItem[]>(() => [...product.gallery.map((src) => ({ type: "image" as const, src })), ...(product.video ? [{ type: "video" as const, src: product.video }] : [])], [product]);
   const [activeMedia, setActiveMedia] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
@@ -38,7 +42,7 @@ function ProductExperience({ product }: { product: StoreProduct }) {
   const { add: addCartItem } = useCart();
   const selectedVariant = product.variants.find((variant) => variant.size === selectedSize) ?? product.variants[0];
   const isOut = selectedVariant.stock === 0;
-  const related = productCatalog.filter((item) => item.slug !== product.slug && (item.category === product.category || item.families.some((family) => product.families.includes(family)))).slice(0, 3);
+  const related = allProducts.filter((item) => item.slug !== product.slug && (item.category === product.category || item.families.some((family) => product.families.includes(family)))).slice(0, 3);
 
   const chooseVariant = (size: typeof selectedSize) => { setSelectedSize(size); setQuantity(1); };
   const addToBag = async (buyNow = false) => {
