@@ -26,8 +26,9 @@ export default function Storefront() {
   const newArrivalSlot = homepage.data?.find((item) => item.slotKey === "new-arrivals");
   const featuredSlot = slot("featured-products");
   const liveProducts: StoreProduct[] = managedProductsOrFallback(managedProducts.data);
-  const liveCategories = managedCategories.data?.length ? managedCategories.data.map((category: any, index: number) => ({ title: category.name, note: category.description || "Explore the collection.", image: category.imageUrl || "/manus-storage/aurelia-hero_81789348.jpg", position: (["left", "right", "center"] as const)[index % 3] })) : storeCategories;
-  const liveBestSellers = liveProducts.filter((product) => product.featuredRank <= 4);
+  const liveCategories = managedCategories.data === undefined ? storeCategories : managedCategories.data.map((category: any, index: number) => ({ title: category.name, note: category.description || "Explore the collection.", image: category.imageUrl || "/manus-storage/aurelia-hero_81789348.jpg", position: (["left", "right", "center"] as const)[index % 3] }));
+  const rankedBestSellers = liveProducts.filter((product) => product.featuredRank <= 4);
+  const liveBestSellers = rankedBestSellers.length ? rankedBestSellers : [...liveProducts].sort((a, b) => a.featuredRank - b.featuredRank).slice(0, 4);
   const liveNewArrivals = liveProducts.filter((product) => product.isNew);
   const featuredProduct = liveProducts.find((product) => product.slug === featuredSlot?.productSlug) || liveBestSellers[0];
   return (
