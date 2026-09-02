@@ -4,7 +4,7 @@ import { adminNotifications, adminSettings, catalogCategories, catalogInventory,
 import { getDb } from "./db";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
-export type ManagedVariantInput = { size: string; sku: string; price: number; originalPrice?: number | null; stock: number; published?: boolean };
+export type ManagedVariantInput = { size: "30ml" | "50ml" | "100ml"; sku: string; price: number; originalPrice?: number | null; stock: number; published?: boolean };
 export type ManagedMediaInput = { mediaType: "image" | "video"; url: string; storageKey?: string | null; altText?: string | null; sortOrder?: number; isPrimary?: boolean };
 export type ManagedProductInput = { slug: string; name: string; brand: string; categoryName: string; gender: "Men" | "Women" | "Unisex"; fragranceFamilies: string[]; familySummary?: string | null; badge?: string | null; tone?: string; published: boolean; featuredRank?: number; isNew?: boolean; notesTop?: string[]; notesMiddle?: string[]; notesBase?: string[]; longevity?: string | null; sillage?: string | null; concentration?: string | null; ingredients?: string | null; usageInstructions?: string | null; story?: string | null; variants: ManagedVariantInput[]; media: ManagedMediaInput[] };
 
